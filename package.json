@@ -1,0 +1,43 @@
+{
+  "name": "@paulll/siso",
+  "version": "1.2.1",
+  "description": "Simple Solve",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha -r ts-node/register src/**/*.ts",
+    "build": "npx babel -d lib src-ng"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulll/siso.git"
+  },
+  "keywords": [
+    "js",
+    "graph",
+    "tasks"
+  ],
+  "author": "paulll",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/paulll/siso/issues"
+  },
+  "homepage": "https://github.com/paulll/siso#readme",
+  "dependencies": {
+    "eventemitter2": "^5.0.1",
+    "fastpriorityqueue": "^0.6.3"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/preset-flow": "^7.0.0",
+    "@babel/preset-typescript": "^7.3.3",
+    "mocha": "^6.1.4",
+    "ts-node": "^8.2.0"
+  },
+  "files": [
+    "/lib",
+    "/src",
+    "/test"
+  ]
+}
