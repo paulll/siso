@@ -1,4 +1,4 @@
-import {Node} from "./Node";
+import {Node} from "./nodes/Node";
 import {Token} from "./Token";
 
 export class Edge {
