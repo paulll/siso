@@ -1,32 +1,28 @@
-import {ProcessorNode} from "../src-ng/ProcessorNode";
+import {Context} from "../src/Context";
+import {Executor} from "../src/Executor";
+import {ProcessorNode} from "../src/nodes/ProcessorNode";
+import {Token} from "../src/Token";
 
-const {Executor} = require("../src-ng/Executor");
-const {Token} = require('../lib/Token');
-
-class StraightNode extends ProcessorNode {
-
-}
-
-describe('Straightforward Test', function () {
+describe("Straightforward Test", () => {
 	const executor = new Executor;
-	it('should process straightforward task graph', async function () {
-		const processed = await new Promise((done) => {
-			for (let i = 0; i < 100; ++i) {
-				executor.addNode({
-					supportedTypes: [[''+i]],
-					preprocess: () => 1,
-					process: (ctx, [i]) => [new Token(''+(i.data+1),i.data+1)]
-				});
-			}
+	test("should process straightforward task graph", (done) => {
+		for (let i = 0; i < 100; ++i) {
+			executor.addNode({
+				type: "ProcessorNode",
+				input: [["" + i]],
+				process: async (ctx, [i]) => {
+					const pos = (await i.data) + 1 ;
+					return [new Token(["" + pos], Promise.resolve(pos))];
+				},
+			} as unknown as ProcessorNode);
+		}
 
-			solver.registerNode({
-				supportedTypes: [['100']],
-				preprocess: () => 1,
-				process: (ctx, [i]) => done()
-			});
+		executor.addNode({
+			type: "ProcessorNode",
+			input: [["100"]],
+			process: (ctx, [i]) => done(expect(1).toBe(1)),
+		} as unknown as ProcessorNode);
 
-			solver.solve(0, [new Token('0',0)])
-		});
+		executor.run([new Token(["0"], Promise.resolve(0))]);
 	});
 });
-

@@ -1,33 +1,36 @@
-const {Solver} = require("../lib/Solver");
-const {Token} = require('../lib/Token');
+import {Context} from "../src/Context";
+import {Executor} from "../src/Executor";
+import {ProcessorNode} from "../src/nodes/ProcessorNode";
+import {Token} from "../src/Token";
 
-describe('Tree Test', function () {
-	it('should visit every final node', async function () {
-		const solver = new Solver;
-		const processed = await new Promise((done) => {
-			let counter = 100;
-			const step = () => {
-				if (!--counter) done();
-			};
+describe("Tree Test'", () => {
+	const executor = new Executor;
+	test("should visit every final node", (done) => {
+		let counter = 100;
+		const step = () => {
+			if (!--counter) done();
+		};
 
-			for (let i = 0; i < 100; ++i) {
-				solver.registerNode({
-					supportedTypes: [[''+i]],
-					preprocess: () => 1,
-					process: (ctx, [i]) => [new Token(''+(i.data+1),i.data+1)]
-				});
-			}
+		for (let i = 0; i < 100; ++i) {
+			executor.addNode({
+				type: "ProcessorNode",
+				input: [["" + i]],
+				process: async (ctx, [i]) => {
+					const pos = (await i.data) + 1 ;
+					return [new Token(["" + pos], Promise.resolve(pos))];
+				},
+			} as unknown as ProcessorNode);
+		}
 
-			for (let i = 0; i < 100; ++i) {
-				solver.registerNode({
-					supportedTypes: [[''+i]],
-					preprocess: () => 1,
-					process: (ctx, [i]) => step()
-				});
-			}
+		for (let i = 0; i < 100; ++i) {
+			executor.addNode({
+				type: "ProcessorNode",
+				input: [["" + i]],
+				process: async (ctx, [i]) => step()
+			} as unknown as ProcessorNode);
+		}
 
-			solver.solve(0, [new Token('0',0)])
-		});
+		executor.run([new Token(["0"], Promise.resolve(0))]);
 	});
 
 	// todo: test priority order
