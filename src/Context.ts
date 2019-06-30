@@ -27,7 +27,9 @@ export class Context extends EventEmitter2 {
 	public eachJoinTemplates: Map<string, EachJoinNode>;
 
 	private readonly edges: FastPriorityQueue<Edge>;
+	private readonly edgesDeDup: Set<string>;
 	private readonly tokens: Map<string, Token[]>;
+	private readonly nodeIds: WeakMap<Node, number>;
 
 	constructor(nodes: Node[]) {
 		super();
@@ -37,10 +39,15 @@ export class Context extends EventEmitter2 {
 
 		this.processorTemplates = new Map();
 		this.eachJoinTemplates = new Map();
+		this.edgesDeDup = new Set();
+		this.nodeIds = new WeakMap();
+
+		let lastId = 0;
 
 		for (const node of nodes) {
-			switch (node.type) {
+			this.nodeIds.set(node, ++lastId);
 
+			switch (node.type) {
 				// Генерируем для каждого типа шаблоны вида {узел, подстановка, позиция вставки}
 				// это позволит затем моментально сгенерировать список ребер при получении нового токена
 				case "ProcessorNode":
@@ -104,12 +111,7 @@ export class Context extends EventEmitter2 {
 		// Регистрируем токены
 		for (const token of newTokens) {
 			for (const type of token.impl) {
-				const existing = this.tokens.get(type);
-				if (existing) {
-					existing.push(token);
-				} else {
-					this.tokens.set(type, [token]);
-				}
+				pushOrSet(this.tokens, type, token);
 			}
 		}
 
@@ -118,8 +120,16 @@ export class Context extends EventEmitter2 {
 			for (const type of token.impl) {
 				const template = this.processorTemplates.get(type) || [];
 				for (const {node, subst, idx} of template) {
-					for (const input of product(subst)) {
+					for (const input of product(...subst)) {
+						if (input.length != subst.length) continue;
 						input[idx] = token;
+
+						const nodeId = this.nodeIds.get(node);
+						const id = JSON.stringify([nodeId, input]);
+						if (this.edgesDeDup.has(id))
+							continue;
+
+						this.edgesDeDup.add(id);
 						this.edges.add(new Edge(node, input, input.reduce((a,b)=>a*b.relevance, 1)));
 					}
 				}
