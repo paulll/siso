@@ -120,7 +120,7 @@ export class Context extends EventEmitter2 {
 				for (const {node, subst, idx} of template) {
 					for (const input of product(subst)) {
 						input[idx] = token;
-						this.edges.add(new Edge(node, input, 1));
+						this.edges.add(new Edge(node, input, input.reduce((a,b)=>a*b.relevance, 1)));
 					}
 				}
 			}
