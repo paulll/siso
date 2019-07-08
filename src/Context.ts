@@ -1,9 +1,8 @@
+import {product} from "cartesian-product-generator";
 import {EventEmitter2} from "eventemitter2";
 import FastPriorityQueue from "fastpriorityqueue";
-import {product} from "cartesian-product-generator";
 
 import {Edge} from "./Edge";
-import {Executor} from "./Executor";
 import {EachJoinNode} from "./nodes/EachJoinNode";
 import {LastJoinNode} from "./nodes/LastJoinNode";
 import {Node} from "./nodes/Node";

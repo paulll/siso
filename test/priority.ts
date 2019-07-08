@@ -1,4 +1,3 @@
-import {Context} from "../src/Context";
 import {Executor} from "../src/Executor";
 import {ProcessorNode} from "../src/nodes/ProcessorNode";
 import {Token} from "../src/Token";
@@ -25,9 +24,5 @@ describe("Priority'", () => {
 		}));
 	});
 
-	// todo: test priority order
-	// todo: test multiple supported types ( [[a], [b] )
-	// todo: test long supported types  ( [[a, b]] )
-	// todo: test multiple emitted types
-	// todo: test long types priority
+	// todo: test multipleInputs priority
 });

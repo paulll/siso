@@ -1,4 +1,3 @@
-import {Context} from "../src/Context";
 import {Executor} from "../src/Executor";
 import {ProcessorNode} from "../src/nodes/ProcessorNode";
 import {Token} from "../src/Token";
