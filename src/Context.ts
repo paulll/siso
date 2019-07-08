@@ -14,17 +14,21 @@ import {Token} from "./Token";
 import {getOrCreate} from "./util/getOrCreate";
 import {pushOrSet} from "./util/pushOrSet";
 
-
 /**
  * Created for each `Executor.run` call.
  * Represents execution progress,
  * Consists of `Executor` instance and set of `Edge`s
+ *
+ * events:
+ *  - newEdge
+ *  - processedEdge
+ *  - newToken
  */
 export class Context extends EventEmitter2 {
 
-	//
 	public processorTemplates: Map<string, Array<{node: ProcessorNode | ProcessorJoinNode, subst: Token[][], idx: number}>>;
-	public eachJoinTemplates: Map<string, EachJoinNode>;
+	public joinTemplates: Map<string, EachJoinNode[]>;
+	public lastJoins: LastJoinNode[];
 
 	private readonly edges: FastPriorityQueue<Edge>;
 	private readonly edgesDeDup: Set<string>;
@@ -38,7 +42,8 @@ export class Context extends EventEmitter2 {
 		this.edges = new FastPriorityQueue<Edge>((a, b) => a.confidence > b.confidence);
 
 		this.processorTemplates = new Map();
-		this.eachJoinTemplates = new Map();
+		this.joinTemplates = new Map();
+		this.lastJoins = [];
 		this.edgesDeDup = new Set();
 		this.nodeIds = new WeakMap();
 
@@ -57,7 +62,7 @@ export class Context extends EventEmitter2 {
 						for (const [idx, type] of inputGroup.entries()) {
 							pushOrSet(this.processorTemplates, type, {
 								node, idx, subst: inputGroup.map((t, i) => {
-									if (idx === i) { return ['']; }
+									if (idx === i) { return [""]; }
 									return getOrCreate(this.tokens, t);
 								}),
 							});
@@ -65,9 +70,16 @@ export class Context extends EventEmitter2 {
 					}
 					break;
 				}
-				// ....case "eachJoinNode": pushOrSet(this.processorTemplates, , )
-				// case "processorJoinNode": this.processorJoinNodes.push(node as ProcessorJoinNode); break;
-				// case "eachJoinNode": this.eachJoinNodes.push(node as EachJoinNode); break;
+				case "LastJoinNode": {
+					const ljn = node as LastJoinNode;
+					this.lastJoins.push(ljn);
+					break;
+				}
+				case "EachJoinNode": {
+					const jn = node as EachJoinNode;
+					pushOrSet(this.joinTemplates, jn.joinTokenType, jn);
+					break;
+				}
 			}
 		}
 	}
@@ -75,30 +87,41 @@ export class Context extends EventEmitter2 {
 	public async run(initialTokens: Token[]) {
 		await this.addEdges(initialTokens);
 
-		//
-		while (!this.edges.isEmpty()) {
-			const edge = this.edges.poll();
-			switch (edge.node.type) {
-				case "ProcessorNode": {
-					const node = edge.node as ProcessorNode;
-					const newTokens = await node.process(this, edge.tokens);
-					if (newTokens && Array.isArray(newTokens)) {
-						await this.addEdges(newTokens);
+		do {
+			if (!this.edges.isEmpty()) {
+				const edge = this.edges.poll();
+				switch (edge.node.type) {
+					case "ProcessorNode": {
+						const node = edge.node as ProcessorNode;
+						const newTokens = await node.process(this, edge.tokens);
+						this.emit("processedEdge", edge);
+						if (newTokens && Array.isArray(newTokens)) {
+							await this.addEdges(newTokens);
+						}
+						break;
 					}
-					break;
-				}
-				case "ProcessorJoinNode": {
-					const node = edge.node as ProcessorJoinNode;
-					const newTokens = await node.process(this, edge.tokens, this.tokens.get(node.joinTokenType));
-					if (newTokens && Array.isArray(newTokens)) {
-						await this.addEdges(newTokens);
+					case "ProcessorJoinNode": {
+						const node = edge.node as ProcessorJoinNode;
+						const newTokens = await node.process(this, edge.tokens, this.tokens.get(node.joinTokenType));
+						if (newTokens && Array.isArray(newTokens)) {
+							await this.addEdges(newTokens);
+						}
+						break;
 					}
-					break;
 				}
 			}
-		}
 
+			for (const ljn of this.lastJoins) {
+				if (!this.edges.isEmpty()) { break; }
+				const tokens = this.tokens.get(ljn.joinTokenType);
+				const newTokens = await ljn.process(this, tokens);
+				this.emit("processedEdge", new Edge(ljn, tokens, Number.EPSILON));
 
+				if (newTokens && Array.isArray(newTokens)) {
+					await this.addEdges(newTokens);
+				}
+			}
+		} while (!this.edges.isEmpty());
 	}
 
 	/**
@@ -110,6 +133,7 @@ export class Context extends EventEmitter2 {
 
 		// Регистрируем токены
 		for (const token of newTokens) {
+			this.emit("newToken", token);
 			for (const type of token.impl) {
 				pushOrSet(this.tokens, type, token);
 			}
@@ -121,25 +145,36 @@ export class Context extends EventEmitter2 {
 				const template = this.processorTemplates.get(type) || [];
 				for (const {node, subst, idx} of template) {
 					for (const input of product(...subst)) {
-						if (input.length != subst.length) continue;
+						if (input.length !== subst.length) { continue; }
 						input[idx] = token;
 
 						const nodeId = this.nodeIds.get(node);
 						const id = JSON.stringify([nodeId, input]);
-						if (this.edgesDeDup.has(id))
+						if (this.edgesDeDup.has(id)) {
 							continue;
+						}
+
+						const edge = new Edge(node, input, input.reduce((a, b) => a * b.relevance, 1));
 
 						this.edgesDeDup.add(id);
-						this.edges.add(new Edge(node, input, input.reduce((a,b)=>a*b.relevance, 1)));
+						this.edges.add(edge);
+						this.emit("newEdge", edge);
+					}
+				}
+
+				const jns = this.joinTemplates.get(type);
+				if (jns) {
+					for (const jn of jns) {
+						const tokens = this.tokens.get(type);
+						const nts = await jn.process(this, tokens);
+						this.emit("processedEdge", new Edge(jn, tokens, Number.EPSILON));
+						if (nts && Array.isArray(nts)) {
+							await this.addEdges(nts);
+						}
 					}
 				}
 			}
 		}
 	}
 
-}
-
-function forceCast<T>(input: any): T {
-	// @ts-ignore
-	return input;
 }
