@@ -1,6 +1,6 @@
-import {Node} from "./Node";
 import {Context} from "../Context";
 import {Token} from "../Token";
+import {Node} from "./Node";
 
 export abstract class EachJoinNode extends Node {
 	public type = "EachJoinNode";
