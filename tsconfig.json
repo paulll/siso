@@ -5,8 +5,11 @@
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "lib": ["es7"]
+    "lib": ["es7"],
+    "outDir": "lib",
+    "declaration": true
   },
+  "include": ["src"],
   "exclude": [
     "node_modules"
   ]
