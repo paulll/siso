@@ -114,7 +114,7 @@ export class Context extends EventEmitter2 {
 				if (!this.edges.isEmpty()) { break; }
 				const tokens = this.tokens.get(ljn.joinTokenType);
 				const newTokens = await ljn.process(this, tokens);
-				this.emit("processedEdge", new Edge(ljn, tokens, Number.EPSILON));
+				this.emit("processedEdge", new Edge(ljn, tokens, Number.EPSILON), newTokens);
 
 				if (newTokens && Array.isArray(newTokens)) {
 					await this.addEdges(newTokens);
