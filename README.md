@@ -1,8 +1,8 @@
 # Simple Solve
 
-![build:unknown](https://travis-ci.org/paulll/siso.svg?branch=master)
-![npm](https://img.shields.io/npm/v/@paulll/siso.svg)
-![license:mit](https://img.shields.io/npm/l/@paulll/siso.svg)
+[![build:unknown](https://travis-ci.org/paulll/siso.svg?branch=master)](https://travis-ci.org/paulll/siso)
+[![npm](https://img.shields.io/npm/v/@paulll/siso.svg)](https://npmjs.com@paulll/siso)
+[![license:mit](https://img.shields.io/npm/l/@paulll/siso.svg)](https://github.com/paulll/siso/blob/master/LICENSE)
 
 Фреймворк для автоматического анализа чего бы то ни было. Изначально 
 задумывался для автоматического решения CTF-задач.
