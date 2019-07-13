@@ -8,7 +8,7 @@ import {Token} from "./Token";
  * друга системы.
  */
 export class Executor {
-	private nodes: Node[];
+	private readonly nodes: Node[];
 
 	constructor() {
 		this.nodes = [];
