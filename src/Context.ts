@@ -25,9 +25,11 @@ import {pushOrSet} from "./util/pushOrSet";
  */
 export class Context extends EventEmitter2 {
 
-	public processorTemplates: Map<string, Array<{node: ProcessorNode | ProcessorJoinNode, subst: Token[][], idx: number}>>;
-	public joinTemplates: Map<string, EachJoinNode[]>;
-	public lastJoins: LastJoinNode[];
+	public readonly data: object;
+
+	private readonly processorTemplates: Map<string, Array<{node: ProcessorNode | ProcessorJoinNode, subst: Token[][], idx: number}>>;
+	private readonly joinTemplates: Map<string, EachJoinNode[]>;
+	private readonly lastJoins: LastJoinNode[];
 
 	private readonly edges: FastPriorityQueue<Edge>;
 	private readonly edgesDeDup: Set<string>;
@@ -41,6 +43,7 @@ export class Context extends EventEmitter2 {
 
 		this.tokens = new Map();
 		this.edges = new FastPriorityQueue<Edge>((a, b) => a.confidence > b.confidence);
+		this.data = {};
 
 		this.processorTemplates = new Map();
 		this.joinTemplates = new Map();
