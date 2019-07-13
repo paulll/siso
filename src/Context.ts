@@ -33,6 +33,8 @@ export class Context extends EventEmitter2 {
 	private readonly edgesDeDup: Set<string>;
 	private readonly tokens: Map<string, Token[]>;
 	private readonly nodeIds: WeakMap<Node, number>;
+	private readonly tokenIds: WeakMap<Token, number>;
+	private lastTokenId: number;
 
 	constructor(nodes: Node[]) {
 		super();
@@ -45,11 +47,13 @@ export class Context extends EventEmitter2 {
 		this.lastJoins = [];
 		this.edgesDeDup = new Set();
 		this.nodeIds = new WeakMap();
+		this.tokenIds = new WeakMap();
+		this.lastTokenId = 0;
 
-		let lastId = 0;
+		let lastNodeId = 0;
 
 		for (const node of nodes) {
-			this.nodeIds.set(node, ++lastId);
+			this.nodeIds.set(node, ++lastNodeId);
 
 			switch (node.type) {
 				// Генерируем для каждого типа шаблоны вида {узел, подстановка, позиция вставки}
@@ -133,6 +137,7 @@ export class Context extends EventEmitter2 {
 		// Регистрируем токены
 		for (const token of newTokens) {
 			this.emit("newToken", token);
+			this.tokenIds.set(token, ++this.lastTokenId);
 			for (const type of token.impl) {
 				pushOrSet(this.tokens, type, token);
 			}
@@ -148,7 +153,9 @@ export class Context extends EventEmitter2 {
 						input[idx] = token;
 
 						const nodeId = this.nodeIds.get(node);
-						const id = JSON.stringify([nodeId, input]);
+						const tokenIds = input.map((t) => this.tokenIds.get(t));
+						const id = `${nodeId}#${tokenIds.join("-")}`;
+
 						if (this.edgesDeDup.has(id)) {
 							continue;
 						}
