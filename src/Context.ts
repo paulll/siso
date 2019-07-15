@@ -38,12 +38,12 @@ export class Context extends EventEmitter2 {
 	private readonly tokenIds: WeakMap<Token, number>;
 	private lastTokenId: number;
 
-	constructor(nodes: Node[]) {
+	constructor(nodes: Node[], data: object = {}) {
 		super();
 
 		this.tokens = new Map();
 		this.edges = new FastPriorityQueue<Edge>((a, b) => a.confidence > b.confidence);
-		this.data = {};
+		this.data = data;
 
 		this.processorTemplates = new Map();
 		this.joinTemplates = new Map();
