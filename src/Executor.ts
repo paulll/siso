@@ -18,6 +18,10 @@ export class Executor {
 		this.nodes.push(node);
 	}
 
+	public createContext(data: object): Context {
+		return new Context(this.nodes, data);
+	}
+
 	public run(initialTokens: Token[]): Context {
 		const ctx = new Context(this.nodes);
 
