@@ -30,7 +30,7 @@
     "fastpriorityqueue": "^0.6.3"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.15",
+    "@types/jest": "^25.1.0",
     "@types/node": "^12.6.8",
     "jest": "^24.8.0",
     "ts-jest": "^24.0.2",
